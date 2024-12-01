@@ -1,6 +1,6 @@
 from .csv_handler.parser import CSVParser
 from .table import Table
 
-read_csv = CSVParser.read_csv
+parse_csv = CSVParser.parse_csv
 
 __all__ = ["parse_csv", "Table"]
