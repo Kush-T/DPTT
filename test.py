@@ -4,6 +4,7 @@ import unittest
 from dptt.tests import test_parser
 from dptt.tests import test_cleaner
 from dptt.tests import test_transforms
+from dptt.tests import test_export
 
 # Initialize the test suite
 loader = unittest.TestLoader()
@@ -13,6 +14,7 @@ suite = unittest.TestSuite()
 suite.addTest(loader.loadTestsFromModule(test_parser))
 suite.addTest(loader.loadTestsFromModule(test_cleaner))
 suite.addTest(loader.loadTestsFromModule(test_transforms))
+suite.addTest(loader.loadTestsFromModule(test_export))
   
 # Run the test suite
 runner = unittest.TextTestRunner(verbosity=2)
