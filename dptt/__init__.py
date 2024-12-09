@@ -1,5 +1,5 @@
 from .csv_handler.parser import CSVParser
-from .table import Table
+from .table.table import Table
 
 parse_csv = CSVParser.parse_csv
 

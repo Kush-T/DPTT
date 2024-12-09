@@ -1,0 +1,9 @@
+Value,Description
+true,Standard true
+false,Standard false
+yes,Alternative true
+no,Alternative false
+1,Numeric true
+0,Numeric false
+t,Single letter true
+f,Single letter false

@@ -1,4 +1,4 @@
-from dptt.table import Table
+from dptt.table.table import Table
 
 def scale_numeric(table, columns=None, scaling_type="minmax"):
     """

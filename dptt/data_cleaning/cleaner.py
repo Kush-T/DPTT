@@ -1,4 +1,4 @@
-from dptt.table import Table
+from dptt.table.table import Table
 
 def _apply_mean_strategy(values):
     """Calculate mean of numeric values."""

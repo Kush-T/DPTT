@@ -1,5 +1,5 @@
 import unittest
-from dptt.table import Table
+from dptt.table.table import Table
 from dptt.exporting import export
 from pathlib import Path
 

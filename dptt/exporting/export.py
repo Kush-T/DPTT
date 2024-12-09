@@ -1,4 +1,4 @@
-from dptt.table import Table
+from dptt.table.table import Table
 
 def export_to_file(table, file_path, delimiter=",", line_ending="\n", quotechar='"'):
     """

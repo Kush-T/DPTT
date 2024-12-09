@@ -1,5 +1,5 @@
 import unittest
-from dptt.table import Table
+from dptt.table.table import Table
 from dptt.data_cleaning import cleaner
 
 class TestHandleMissing(unittest.TestCase):

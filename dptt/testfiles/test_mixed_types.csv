@@ -1,0 +1,4 @@
+String,Integer,Float,Date,Boolean
+text,123,45.67,2024-01-15,true
+more,456,89.12,2024/01/16,yes
+data,789,23.45,01/17/2024,1
