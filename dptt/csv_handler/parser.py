@@ -5,7 +5,7 @@ class CSVParser:
     @classmethod
     def parse_csv(cls, file_path, delimiter=",", escapechar=None, quotechar='"', 
                  header=True, encoding="utf-8", skip_blank_lines=True, max_field_size=None,
-                 column_types=None, infer_types=True, sample_size=100):
+                 column_types=None, infer_types=True, sample_size=100, memory_efficient=False):
         """
         Reads a CSV file and returns a Table object with custom parsing logic.
         
@@ -21,6 +21,7 @@ class CSVParser:
             column_types: Dictionary mapping column names to ColumnType instances
             infer_types: Whether to infer types for unspecified columns
             sample_size: Number of rows to sample for type inference
+            memory_efficient: If True, reads file line by line instead of all at once
             
         Returns:
             Table: An instance of the Table class containing the parsed and typed data
@@ -30,41 +31,71 @@ class CSVParser:
             FileNotFoundError: If the input file doesn't exist
             UnicodeDecodeError: If the file cannot be decoded with the specified encoding
         """
-        raw_data = {}
-        
         try:
             with open(file_path, mode="r", encoding=encoding) as file:
-                lines = [line.strip() for line in file if line.strip() or not skip_blank_lines]
-                
-                if not lines:
-                    raise ValueError("Empty file")
-                
-                # Parse headers
-                headers = cls._parse_headers(lines[0], delimiter, escapechar, quotechar, header)
+                # Read and validate header line
+                while True:
+                    first_line = file.readline()
+                    if not first_line:
+                        raise ValueError("Empty file")
+                    if first_line.strip() or not skip_blank_lines:
+                        break
+
+                headers = cls._parse_headers(first_line.strip(), delimiter, escapechar, quotechar, header)
                 raw_data = {header: [] for header in headers}
-                
-                # Parse data lines
-                for line_num, line in enumerate(lines[1:] if header else lines, start=2):
-                    try:
-                        row = cls._parse_line(line, delimiter, escapechar, quotechar, max_field_size)
-                        
-                        # Validate row length
-                        if len(row) != len(headers):
-                            print(f"Warning - Line {line_num}: Expected {len(headers)} fields, got {len(row)}")
-                            # Pad or truncate row to match header length
-                            row = row[:len(headers)] + [''] * (len(headers) - len(row))
+
+                if not memory_efficient:
+                    # Original behavior: Read all lines at once
+                    lines = [first_line.strip()]
+                    lines.extend(line.strip() for line in file if line.strip() or not skip_blank_lines)
+                    
+                    # Parse data lines
+                    for line_num, line in enumerate(lines[1:] if header else lines, start=2):
+                        try:
+                            row = cls._parse_line(line, delimiter, escapechar, quotechar, max_field_size)
                             
-                        for header, value in zip(headers, row):
-                            raw_data[header].append(value)
+                            # Validate row length
+                            if len(row) != len(headers):
+                                print(f"Warning - Line {line_num}: Expected {len(headers)} fields, got {len(row)}")
+                                row = row[:len(headers)] + [''] * (len(headers) - len(row))
+                                
+                            for header, value in zip(headers, row):
+                                raw_data[header].append(value)
+                                
+                        except ValueError as e:
+                            print(f"Error parsing line {line_num}: {e}")
+                            raise
+                else:
+                    # Memory-efficient: Process line by line
+                    line_num = 2  # Start after header
+                    
+                    while True:
+                        line = file.readline()
+                        if not line:
+                            break
                             
-                    except ValueError as e:
-                        print(f"Error parsing line {line_num}: {e}")
-                        raise
-                        
+                        if not line.strip() and skip_blank_lines:
+                            continue
+                            
+                        try:
+                            row = cls._parse_line(line.strip(), delimiter, escapechar, quotechar, max_field_size)
+                            
+                            if len(row) != len(headers):
+                                print(f"Warning - Line {line_num}: Expected {len(headers)} fields, got {len(row)}")
+                                row = row[:len(headers)] + [''] * (len(headers) - len(row))
+                                
+                            for header, value in zip(headers, row):
+                                raw_data[header].append(value)
+                                
+                        except ValueError as e:
+                            print(f"Error parsing line {line_num}: {e}")
+                            raise
+                            
+                        line_num += 1
+
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
         except UnicodeDecodeError as e:
-            # Just re-raise the original error instead of creating a new one
             raise
 
         # Determine column types
@@ -97,6 +128,8 @@ class CSVParser:
                         typed_data[header].append(value)
             
         return Table(typed_data, final_types)
+
+    # [Rest of the class implementation remains unchanged]
 
     @staticmethod
     def _parse_headers(line, delimiter, escapechar, quotechar, has_header):

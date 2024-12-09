@@ -318,3 +318,94 @@ class TestCSVParserPerformance(CSVParserTestBase):
         
         self.assertEqual(table.data['Symbol'], ['@', '#', '$', '&'])
         self.assertEqual(table.data['Value'], [1, 2, 3, 4])
+
+class TestCSVParserMemoryEfficient(CSVParserTestBase):
+    """Tests for memory-efficient CSV parsing functionality"""
+    
+    def test_memory_efficient_basic(self):
+        """Test that memory-efficient mode produces same results as regular mode"""
+        file_path = self.testfiles_dir / "test_with_header.csv"
+        
+        # Parse both ways
+        table_regular = CSVParser.parse_csv(str(file_path), memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), memory_efficient=True)
+        
+        # Results should be identical
+        self.assertEqual(table_regular.data, table_efficient.data)
+        self.assertEqual(len(table_regular.data['Name']), len(table_efficient.data['Name']))
+        self.assertEqual(table_regular.data['Name'], table_efficient.data['Name'])
+        self.assertEqual(table_regular.data['Age'], table_efficient.data['Age'])
+        self.assertEqual(table_regular.data['Location'], table_efficient.data['Location'])
+
+    def test_memory_efficient_large_file(self):
+        """Test memory-efficient parsing with large file"""
+        file_path = self.testfiles_dir / "test_wide.csv"
+        
+        # Should handle large file without memory issues
+        table = CSVParser.parse_csv(str(file_path), memory_efficient=True)
+        self.assertEqual(len(table.data), 1000)  # Test file has 1000 columns
+
+    def test_memory_efficient_with_types(self):
+        """Test memory-efficient parsing with type inference and conversion"""
+        file_path = self.testfiles_dir / "test_mixed_types.csv"
+        
+        # Parse with type inference in both modes
+        table_regular = CSVParser.parse_csv(str(file_path), infer_types=True, memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), infer_types=True, memory_efficient=True)
+        
+        # Verify same type inference and conversion
+        self.assertIsInstance(table_efficient.data['Integer'][0], int)
+        self.assertIsInstance(table_efficient.data['Float'][0], float)
+        self.assertIsInstance(table_efficient.data['String'][0], str)
+        self.assertIsInstance(table_efficient.data['Boolean'][0], bool)
+        
+        # Verify values are identical
+        self.assertEqual(table_regular.data, table_efficient.data)
+
+    def test_memory_efficient_with_errors(self):
+        """Test that memory-efficient mode handles errors same as regular mode"""
+        file_path = self.testfiles_dir / "test_malformed.csv"
+        
+        # Parse both ways
+        table_regular = CSVParser.parse_csv(str(file_path), memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), memory_efficient=True)
+        
+        # Should handle malformed data identically
+        self.assertEqual(table_regular.data, table_efficient.data)
+        self.assertEqual(table_regular.data['Name'], table_efficient.data['Name'])
+        self.assertEqual(table_regular.data['Location'], table_efficient.data['Location'])
+
+    def test_memory_efficient_empty_lines(self):
+        """Test memory-efficient parsing with empty lines"""
+        file_path = self.testfiles_dir / "test_empty_lines.csv"
+        
+        # Test with skip_blank_lines=True
+        table_regular = CSVParser.parse_csv(str(file_path), skip_blank_lines=True, memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), skip_blank_lines=True, memory_efficient=True)
+        self.assertEqual(table_regular.data, table_efficient.data)
+        
+        # Test with skip_blank_lines=False
+        table_regular = CSVParser.parse_csv(str(file_path), skip_blank_lines=False, memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), skip_blank_lines=False, memory_efficient=True)
+        self.assertEqual(table_regular.data, table_efficient.data)
+
+    def test_memory_efficient_quoted_fields(self):
+        """Test memory-efficient parsing with quoted fields"""
+        file_path = self.testfiles_dir / "test_quoted_fields.csv"
+        
+        table_regular = CSVParser.parse_csv(str(file_path), memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), memory_efficient=True)
+        
+        self.assertEqual(table_regular.data, table_efficient.data)
+        self.assertEqual(table_regular.data['Location'], 
+                        ['New York, USA', 'Los Angeles, USA', 'Chicago, USA'])
+
+    def test_memory_efficient_encoding(self):
+        """Test memory-efficient parsing with different encodings"""
+        file_path = self.testfiles_dir / "test_utf8.csv"
+        
+        table_regular = CSVParser.parse_csv(str(file_path), encoding='utf-8', memory_efficient=False)
+        table_efficient = CSVParser.parse_csv(str(file_path), encoding='utf-8', memory_efficient=True)
+        
+        self.assertEqual(table_regular.data, table_efficient.data)
+        self.assertEqual(len(table_regular.data['Name']), len(table_efficient.data['Name']))
