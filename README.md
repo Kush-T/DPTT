@@ -109,7 +109,3 @@ python -m unittest discover dptt/tests
 
 ## License
 This project is licensed under the MIT License.
-
----
-
-Let me know if you would like additional details or further customization!
